@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+  	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+  	<title>YouTube 搜尋</title>
+  	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  	<script type="text/javascript" src="js/jquery.masonry.js"></script>
+	<script type="text/javascript" src="js/jquery.infinitescroll.js"></script>
+  
+	<link rel="stylesheet" type="text/css" href="css/masonry.css" />
+</head>
+
+<body>
+  
+  <div align="center">
+    <img src="images/cupcake.png"/>
+    
+    <h1 style="font-size:50px">YouTube 搜尋</h1>
+    <form id="lookup_fields">
+        <label>請輸入關鍵字：</label>
+        <input type="text" id="queries" value="忘情水">
+        <button id="lookup" type="submit">搜尋</button>
+        <br />
+        <br />
+        <hr />
+    </form>
+  </div>
+ 
+  <div class="demo clearfix">
+      <div id="masonry_div" class="item_list infinite_scroll"></div>
+  </div>
+
+  
+  <script type="text/javascript">
+
+  	function extract_data_from_json(json) {
+
+		var list = new Array();
+		//console.log( "size(" + json.feed.entry.length + ")" );
+		for(var i=0; i<json.feed.entry.length; i++ ) {
+
+			var data = {}
+			var temp = json.feed.entry[i].link[0].href;
+			data.url = temp.replace("&feature=youtube_gdata", "");
+			data.video_url = data.url.replace("watch?v=", "embed/");
+			data.video_title = json.feed.entry[i].title.$t;
+			list.push(data);
+		}
+
+		return list;
+  	}
+  
+	$('#lookup').click( function(ev) {
+		
+		ev.preventDefault();
+
+		var lines = $('#queries').val().split('\n');
+		//console.log("lines(" + lines + ")");
+		$.post("http://gdata.youtube.com/feeds/api/videos?callback=?", 
+			{ 
+				alt: 'json', 
+				q: ""+lines
+			},
+		   	function(data){
+				
+				$('#masonry_div').empty();
+
+				//console.log( data );
+				var video_datas = extract_data_from_json(data);
+				//console.log(video_datas);
+				
+				var msg = "";
+				for(var i=0; i<video_datas.length; i++ ) {
+			
+					
+					msg += "<div class='item masonry_brick'>";
+						msg += "<div class='item_t'>";
+							msg += "<div class='img'>";
+								msg += "<a href='" + video_datas[i].url + "'>";
+									msg += "<iframe width='210' height='210' src='" + video_datas[i].video_url + "' alt='等待載入中…'></iframe>";
+								msg += "</a>";
+								//msg += "<span class='price'>￥195.00</span>";
+								msg += "<div class='btns'>";
+									msg += "<a href='#' class='img_album_btn'>加入專輯</a>";
+								msg += "</div>";
+							msg += "</div>";
+							//msg += "<div class='title'><span>js lazyload實現網頁圖片延遲加載特效</span></div>";
+						msg += "</div>";
+						msg += "<div class='item_b clearfix'>";
+							msg += "<div class='items_likes fl'>";
+								msg += "<a href='#' class='like_btn'></a>";
+								msg += "<em class='bold'>0</em>";
+							msg += "</div>";
+							msg += "<div class='items_comment fr'><a href=''>評論</a><em class='bold'>(0)</em></div>";
+						msg += "</div>";
+					msg += "</div>";
+					
+					
+				}
+				
+				$('#masonry_div').html( msg );
+				
+			
+				masonry_init();
+				
+		   	}, 
+			"json"
+		);
+
+		$('#results-table').show();
+	});
+ 
+  	function item_masonry(){ 
+
+		$('.item iframe').load(function(){ 
+			$('.infinite_scroll').masonry({ 
+				itemSelector: '.masonry_brick',
+				columnWidth:226,
+				gutterWidth:15								
+			});		
+		});
+			
+		$('.infinite_scroll').masonry({ 
+			itemSelector: '.masonry_brick',
+			columnWidth:226,
+			gutterWidth:15								
+		});	
+	}
+  
+	function item_callback(){ 
+		
+		$('.item').mouseover(function(){
+			$(this).css('box-shadow', '0 1px 5px rgba(35,25,25,0.5)');
+			$('.btns',this).show();
+		}).mouseout(function(){
+			$(this).css('box-shadow', '0 1px 3px rgba(34,25,25,0.2)');
+			$('.btns',this).hide();		 	
+		});
+		
+		item_masonry();
+	}
+
+  	function masonry_init() {
+		
+   		console.log("masonry_init");
+		
+		item_callback();  
+	
+		$('.item').fadeIn();
+	}
+
+  </script>
+
+</html>
